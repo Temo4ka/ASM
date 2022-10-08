@@ -48,7 +48,7 @@ int stackAsmBin(Lines *commandList, FILE *outStream) {
     catchNullptr(commandList);
     catchNullptr(outStream);
 
-    char *outputData  = (char *) calloc(commandList->numberOfLines + 3, sizeof(int));
+    char *outputData  = (char *) calloc(commandList -> numberOfLines, sizeof(int));
     char *currentElem = outputData;
     size_t dataSize  = 3 * sizeof(int);
 
@@ -61,15 +61,29 @@ int stackAsmBin(Lines *commandList, FILE *outStream) {
 
     for (size_t currentCommand = 0; currentCommand < commandList -> numberOfLines; ++currentCommand) {
         if (!strcmpi(commandList -> array[currentCommand].line, "push")) {
+            currentCommand++;
+
             size_t sizeOfCmd = 0;
             argDefenition(&(commandList -> array[currentCommand]), &currentElem, &sizeOfCmd, PUSH);
+
               dataSize  += sizeOfCmd;
             currentElem += sizeOfCmd;
         }  else if (!strcmpi(commandList -> array[currentCommand].line, "pop")) {
             size_t sizeOfCmd = 0;
-            argDefenition(&(commandList -> array[currentCommand]), &currentElem, &sizeOfCmd, POP);
-            currentElem += sizeOfCmd;
-              dataSize  += sizeOfCmd;
+
+            ++currentCommand;
+
+            if (*(commandList -> array[currentCommand].line) == '[' || *(commandList -> array[currentCommand].line) == 'r') {
+                argDefenition(&(commandList -> array[currentCommand]), &currentElem, &sizeOfCmd, POP);
+                currentElem += sizeOfCmd;
+                dataSize  += sizeOfCmd;
+            } else {
+                --currentCommand;
+
+                *currentElem = POP;
+                ++currentElem;
+                ++dataSize;
+            }
         } else if (!strcmpi(commandList -> array[currentCommand].line, "halt")) {
             *currentElem = HALT;
             ++currentElem;
@@ -92,7 +106,7 @@ int stackAsmBin(Lines *commandList, FILE *outStream) {
             ++dataSize;
         }
     }
-    *sizeOfData = dataSize;
+    *((int *) sizeOfData) = dataSize;
 
     fwrite(outputData, sizeof(char), dataSize, outStream);
 
@@ -105,26 +119,27 @@ int argDefenition(Line *args, char **cmdArgs, size_t *sizeData, char command) {
     char   cmd   =    command  ;
     char  RegArg =       0     ;
     int   NumArg =       0     ;
-    *sizeData = sizeof(char);
+       *sizeData = sizeof(char);
 
     char *currentPart = strtok(args -> line, "]+ ");
     while (currentPart != nullptr) {
-        if (*currentPart == '[')
+        if (*currentPart == '[') {
             cmd |= TypeRAM;
-        currentPart++;
-        if (stricmp("rax", currentPart)) {
+            currentPart++;
+        }
+        if (!stricmp("rax", currentPart)) {
             cmd |= TypeReg;
             RegArg = 1;
             *sizeData += sizeof(char);
-        } else if (stricmp("rbx", currentPart)) {
+        } else if (!stricmp("rbx", currentPart)) {
             cmd |= TypeReg;
             RegArg = 2;
             *sizeData += sizeof(char);
-        } else if (stricmp("rcx", currentPart)) {
+        } else if (!stricmp("rcx", currentPart)) {
             cmd |= TypeReg;
             RegArg = 3;
             *sizeData += sizeof(char);
-        } else if (stricmp("rdx", currentPart)) {
+        } else if (!stricmp("rdx", currentPart)) {
             cmd |= TypeReg;
             RegArg = 4;
             *sizeData += sizeof(char);
@@ -136,7 +151,6 @@ int argDefenition(Line *args, char **cmdArgs, size_t *sizeData, char command) {
         currentPart = strtok(nullptr, "]+ ");
     }
 
-    *cmdArgs = (char *) calloc(*sizeData, sizeof(char));
     catchNullptr(*cmdArgs);
 
     char *curArg = *cmdArgs;
@@ -147,7 +161,7 @@ int argDefenition(Line *args, char **cmdArgs, size_t *sizeData, char command) {
         curArg++;
     }
     if (cmd & TypeNum)
-        *curArg = NumArg;
+        *((int *) curArg) = NumArg;
 
     return OK;
 
