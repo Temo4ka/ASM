@@ -1,10 +1,22 @@
+//!     TEMO4KA's ASSEMBLER,
+//!   Made with Love and Pain,
+//!  If u want to use labels yo should use -> :[labelName] <- after commands
+//!  COMMAND LIST: [Command_Name] [Types of Arguments]
+//!  [ Push ]    [ [], r..x, number]
+//!  [ Pop  ]    [ [], r..x]
+//!  [ Jump ]    [ label name ]
+//!  [ Add  ]    [ - ]
+//!  [ Product ] [ - ]
+//!  [ Out ]     [ - ]
+//!  [ Halt ]    [ - ]
+//!
+
 #include <iostream>
 #include <cstring>
 
 #include "functionList.h"
-#ifndef catchNullptr
-    #include "asm.h"
-#endif
+#include "asm.h"
+
 
 const char *INPUT_FILE_NAME  = "commandtext.txt";
 const char *OUTPUT_FILE_NAME = "commandnumb.txt";
@@ -53,13 +65,22 @@ int main(int argc, char *argv[]) {
     if (err)
         return err;
 
+    Label *labels = (Label *) calloc(MAX_NUM_LABELS, sizeof(Label));
+    size_t ReadyLabels = 0;
+
     err = stackAsmTex(&commandList, numbCommandTexFile);
     if (err)
         return err;
 
-    err = stackAsmBin(&commandList, numbCommandBinFile);
+    err = stackAsmBin(&commandList, &labels, &ReadyLabels, numbCommandBinFile);
     if (err)
         return err;
+
+    err = stackAsmBin(&commandList, &labels, &ReadyLabels, numbCommandBinFile);
+    if (err)
+        return err;
+
+    free(labels);
 
     err = textDestructor(&commandFile);
     if (err)
