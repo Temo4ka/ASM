@@ -13,6 +13,7 @@ int argDefenition(Line *args, char **cmdArgs, size_t *dataSize, char command);
 int stackAsmBin(Lines *commandList, Label **labels, size_t *labelsNum, FILE *outStream) {
     catchNullptr(commandList);
     catchNullptr(outStream);
+    catchNullptr(labels);
 
     char *outputData  = (char *) calloc(commandList -> numberOfLines, sizeof(int));
     char *currentElem = outputData;
@@ -39,12 +40,13 @@ int stackAsmBin(Lines *commandList, Label **labels, size_t *labelsNum, FILE *out
                 return err;
 
             if (pointer == -1) {
-                (*labelsNum)++;
                 err = labelCtor(&((*labels)[*labelsNum]), previousCmd, commandList -> array[currentCommand].line);
+                (*labelsNum)++;
                 if (err)
                     return err;
             } else
                 return LabelSameNameErr;
+            currentCommand++;
         }
         previousCmd = dataSize - 3 * sizeof(int);
         if (!strcmpi(commandList -> array[currentCommand].line, "push")) {
@@ -113,6 +115,7 @@ int stackAsmBin(Lines *commandList, Label **labels, size_t *labelsNum, FILE *out
 
     if (printFlag)
         fwrite(outputData, sizeof(char), dataSize, outStream);
+    free(outputData);
 
     return OK;
 }
