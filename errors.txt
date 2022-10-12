@@ -1,0 +1,5 @@
+Nullptr caught.
+Variable: txt -> file,
+File: withFile.cpp,
+Line: 29,
+Function: int TEXTConstructor(Text*, const char*)

@@ -52,9 +52,9 @@ int stackAsmBin(Lines *commandList, Label **labels, size_t *labelsNum, FILE *out
 
         previousCmd = (currentElem - outputData) - 3 * sizeof(int);
 
-#define DEF_CMD(name, num, arg)                                                                           \
+#define DEF_CMD(name, num, arg, ...)                                                                      \
     if (!strcmpi(commandList -> array[currentCommand].line, #name)) {                                     \
-        if (arg) {                                                                                        \
+        if (arg > 0) {                                                                                    \
             currentCommand++;                                                                             \
                                                                                                           \
             size_t sizeOfCmd = 0;                                                                         \
@@ -70,24 +70,31 @@ int stackAsmBin(Lines *commandList, Label **labels, size_t *labelsNum, FILE *out
         }                                                                                                 \
     } else                                                                                                \
 
-#define DEF_CMD_JUMP(name, num, oper)                                                                   \
-        if (!strcmpi(commandList -> array[currentCommand].line, #name)) {                               \
-            *currentElem = CMD_##name;                                                                  \
-            ++currentElem;                                                                              \
-            ++currentCommand;                                                                           \
-                                                                                                        \
-            int pointer = 0;                                                                            \
-            err = labelTryFind(labels, commandList -> array[currentCommand].line, *labelsNum, &pointer);\
-            if (err)                                                                                    \
-                return err;                                                                             \
-                                                                                                        \
-            *((int *) currentElem) = pointer;                                                           \
-            if (pointer == -1)                                                                          \
-                printFlag = 0;                                                                          \
-                                                                                                        \
-            currentElem += sizeof(int);                                                                 \
-              dataSize  += sizeof(int);                                                                 \
-        } else                                                                                          \
+#define DEF_CMD_JUMP(name, num, oper)                                                                     \
+        if (!strcmpi(commandList -> array[currentCommand].line, #name)) {                                 \
+            *currentElem = CMD_##name;                                                                    \
+            ++currentElem;                                                                                \
+            ++currentCommand;                                                                             \
+                                                                                                          \
+            int pointer = 0;                                                                              \
+            err = labelTryFind(labels, commandList -> array[currentCommand].line, *labelsNum, &pointer);  \
+            if (err)                                                                                      \
+                return err;                                                                               \
+                                                                                                          \
+            *((int *) currentElem) = pointer;                                                             \
+            if (pointer == -1)                                                                            \
+                printFlag = 0;                                                                            \
+                                                                                                          \
+            currentElem += sizeof(int);                                                                   \
+              dataSize  += sizeof(int);                                                                   \
+        } else                                                                                            \
+
+#define DEF_CMD_REC(name, num, ...)                                                                       \
+        if (!strcmpi(commandList -> array[currentCommand].line, #name)) {                                 \
+            *currentElem = CMD_##name;                                                                    \
+            ++currentElem;                                                                                \
+            ++dataSize;                                                                                   \
+        }
 
 #include "cmd.h"
 
@@ -113,11 +120,11 @@ int stackAsmBin(Lines *commandList, Label **labels, size_t *labelsNum, FILE *out
 int argDefenition(Line *args, char **cmdArgs, size_t *sizeData, char command) {
     catchNullptr(args);
 
-    char  line[20]  = "";
-    char   cmd   =    command  ;
-    char  RegArg =       0     ;
-    int   NumArg =       0     ;
-       *sizeData = sizeof(char);
+    char         line[20] =      ""     ;
+    unsigned char cmd     =    command  ;
+    char         RegArg   =       0     ;
+    int          NumArg   =       0     ;
+                *sizeData = sizeof(char);
 
     strcpy(line, args -> line);
 

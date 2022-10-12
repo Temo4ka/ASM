@@ -2,15 +2,25 @@
 //!   Made with Love and Pain,
 //!  If u want to use labels yo should use -> :[labelName] <- after commands
 //!  COMMAND LIST: [Command_Name] [Types of Arguments]
-//!  [ Push ]    [ [], r..x, number]
-//!  [ Pop  ]    [ [], r..x]
-//!  [ Jump ]    [ label name ]
-//!  [ Add  ]    [ - ]
-//!  [ Product ] [ - ]
-//!  [ Out ]     [ - ]
-//!  [ Halt ]    [ - ]
-//!
+//!  [ Push ] [ [], r..x, number]
+//!  [ Pop  ] [ [], r..x]
+//!  [ Ja ]   [ label name ]
+//!  [ Jae ]  [ label name ]
+//!  [ Jb ]   [ label name ]
+//!  [ Jbe ]  [ label name ]
+//!  [ JL ]   [ label name ]
+//!  [ JM ]   [ label name ]
+//!  [ Add  ] [ - ]
+//!  [ Mult ] [ - ]
+//!  [ Sub ]  [ - ]
+//!  [ Out ]  [ - ]
+//!  [ Halt ] [ - ]
+//!  [ Call ] [ label name]
+//!  [ Ret ]  [ - ]
+
+
 #define ASMBLER_CP
+
 #include "asm.h"
 #include <iostream>
 #include <cstring>
