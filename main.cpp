@@ -10,13 +10,10 @@
 //!  [ Out ]     [ - ]
 //!  [ Halt ]    [ - ]
 //!
-
+#define ASMBLER_CP
+#include "asm.h"
 #include <iostream>
 #include <cstring>
-
-#include "functionList.h"
-#include "asm.h"
-
 
 const char *INPUT_FILE_NAME  = "commandtext.txt";
 const char *OUTPUT_FILE_NAME = "commandnumb.txt";

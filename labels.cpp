@@ -1,3 +1,5 @@
+#define ASMBLER_CP
+
 #include "asm.h"
 
 int labelCtor(Label *label, const size_t cmd, const char *name) {
