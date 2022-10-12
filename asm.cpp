@@ -86,7 +86,7 @@ int stackAsmBin(Lines *commandList, Label **labels, size_t *labelsNum, FILE *out
                 printFlag = 0;                                                                            \
                                                                                                           \
             currentElem += sizeof(int);                                                                   \
-              dataSize  += sizeof(int);                                                                   \
+              dataSize  += sizeof(int) + sizeof(char);                                                    \
         } else                                                                                            \
 
 #define DEF_CMD_REC(name, num, ...)                                                                       \
