@@ -29,7 +29,7 @@ DEF_CMD(ADD , 3, 0, {
 
 DEF_CMD(OUT , 4, -1, {
     Elem_t value = stackPop(&(cpu -> stack), &err);
-    fprintf(stream, "%d.%02d\n", value / PRECISION, abs(value % PRECISION));
+    fprintf(stream, "%d.%02d\n", value / PRECISION, abs(value % PRECISION)); // TODO: mojno sdelat norm
     err |= stackPush(&(cpu -> stack), value);
 })
 

@@ -10,7 +10,6 @@ enum labelStatus {
 enum labelErrors {
     LabelReConstruction = 1,
     LabelReDestruction  = 2,
-      LabelSameNameErr  = 3,
 };
 
 #define catchNullptr(a) { \

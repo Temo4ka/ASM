@@ -18,54 +18,53 @@
 //!  [ Call ] [ label name]
 //!  [ Ret ]  [ - ]
 
+// FUCK:
+//
+// sscanf(buf, "%s:%n", string, &n);
+// %n -
 
 #define ASMBLER_CP
 
 #include "asm.h"
 #include <iostream>
 #include <cstring>
-
-const char *INPUT_FILE_NAME  = "commandtext.txt";
-const char *OUTPUT_FILE_NAME = "commandnumb.txt";
-const char *OUTBIN_FILE_NAME =  "bincommand.bin";
+#include "defaultFileNames.h"
 
 int main(int argc, char *argv[]) {
-    char *  fileIn   = nullptr;
-    char *fileTexOut = nullptr;
-    char *fileBinOut = nullptr;
+    const char *  fileIn   =  INPUT_FILE_NAME;
+    const char *fileTexOut = OUTPUT_FILE_NAME;
+    const char *fileBinOut = OUTBIN_FILE_NAME;
 
     int err = 0;
 
     switch (argc) {
-        case 4:   fileIn    =           argv[3]        ;
-                fileTexOut  =           argv[2]        ;
-                fileBinOut  =           argv[2]        ;
-                  break;
+        case 4:
+              fileIn    =           argv[1]        ;
+            fileTexOut  =           argv[2]        ;
+            fileBinOut  =           argv[3]        ;
+            break;
 
-        case 3:   fileIn    =           argv[2]        ;
-                fileTexOut  =           argv[1]        ;
-                fileBinOut  = (char *) OUTBIN_FILE_NAME;
-                  break;
+        case 3:
+              fileIn    =           argv[1]        ;
+            fileTexOut  =           argv[2]        ;
+            break;
 
-        case 2:   fileIn    =           argv[1]        ;
-                fileTexOut  = (char *) OUTPUT_FILE_NAME;
-                fileBinOut  = (char *) OUTBIN_FILE_NAME;
-                  break;
-        default:   fileIn   = (char *)  INPUT_FILE_NAME;
-                 fileTexOut = (char *) OUTPUT_FILE_NAME;
-                 fileBinOut = (char *) OUTBIN_FILE_NAME;
-                  break;
+        case 2:
+              fileIn    =           argv[1]        ;
+            break;
+
+        default:
+            break;
     }
 
     Text commandFile = {};
     err = TEXTConstructor(&commandFile, fileIn);
-    if (err)
-        return err;
+    if (err) return EXIT_FAILURE;
 
-    FILE *numbCommandTexFile = fopen(fileTexOut,  "w");
+//    FILE *numbCommandTexFile = fopen(fileTexOut,  "w");
     FILE *numbCommandBinFile = fopen(fileBinOut, "wb");
-
-    catchNullptr(numbCommandTexFile);
+    if (numbCommandBinFile == nullptr) return EXIT_FAILURE;
+//    catchNullptr(numbCommandTexFile);
 
     Lines commandList = {};
     err = getArrayOfStrings(&commandList, &commandFile);
@@ -74,25 +73,26 @@ int main(int argc, char *argv[]) {
 
     Label *labels = (Label *) calloc(MAX_NUM_LABELS, sizeof(Label));
     size_t ReadyLabels = 0;
+    if (labels == nullptr) return EXIT_FAILURE;
 
-    err = stackAsmTex(&commandList, numbCommandTexFile);
-    if (err)
-        return err;
-
-    err = stackAsmBin(&commandList, &labels, &ReadyLabels, numbCommandBinFile);
-    if (err)
-        return err;
+//    err = stackAsmTex(&commandList, numbCommandTexFile);
+//    if (err) return err;
 
     err = stackAsmBin(&commandList, &labels, &ReadyLabels, numbCommandBinFile);
-    if (err)
-        return err;
+    if (err) return EXIT_FAILURE;
 
+    err = stackAsmBin(&commandList, &labels, &ReadyLabels, numbCommandBinFile);
+    if (err) return EXIT_FAILURE;
+
+    for (size_t current = 0; current < ReadyLabels; ++current)
+        if (labelDtor(&labels[current])) return EXIT_FAILURE;
     free(labels);
 
     err = textDestructor(&commandFile);
-    if (err)
-        return err;
-    fclose(numbCommandTexFile);
+    if (err) return EXIT_FAILURE;
+
+//    fclose(numbCommandTexFile);
     fclose(numbCommandBinFile);
+
     return 0;
 }

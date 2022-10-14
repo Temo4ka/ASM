@@ -15,7 +15,7 @@ int labelCtor(Label *label, const size_t cmd, const char *name) {
     return OK;
 }
 
-int labelDtor(Label *label) {
+int labelDtor(Label *label) { // TODO: call dtor
     catchNullptr(label);
     if (label -> status == Destructed)
         return LabelReDestruction;

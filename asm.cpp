@@ -6,33 +6,60 @@
     #include "functionList.h"
 #endif
 
-const char  *SIGNATURE        =        "CP"      ;
-const int    ASM_VERSION      =         3        ;
+/* TODO:
+ *  Makefile
+ *
+ *  target1: // produces executable
+ *     g++
+ *
+ *  targets: asm cpu run
+ *
+ *  run:
+ *      g++ run.cpp -o run
+ *
+ *  // run.cpp
+ *
+ *  int main(argc, argv)
+ *  {
+ *      system("./asm argv[1] binary");
+ *      system("./cpu binary");
+ *
+ *      return 0;
+ *  }
+ *
+ *  // make cpu
+ *  // make asm
+ *  // make run
+ *
+ *  target2
+ *
+ *  target3
+ *
+ */
 
-int argDefenition(Line *args, char **cmdArgs, size_t *dataSize, char command);
+//const char  *SIGNATURE        =        "CP"      ;
+const int ASM_VERSION =         3       ;
+const int  SIGNATURE  = ('C' << 8) + 'P';
+
+int argDefinition(Line *args, char *cmdArgs, size_t *dataSize, char command);
+
+int headerCtor(Header *header, size_t signature, size_t version, size_t dataSize);
 
 int stackAsmBin(Lines *commandList, Label **labels, size_t *labelsNum, FILE *outStream) {
     catchNullptr(commandList);
     catchNullptr( outStream );
     catchNullptr(   labels  );
 
-    char *outputData  = (char *) calloc(commandList -> numberOfLines, sizeof(int));
-    char *currentElem =                         outputData                        ;
-    size_t dataSize   =                      3 * sizeof(int)                      ;
-    int      err      =                             0                             ;
-    bool  printFlag   =                             1                             ;
-
-     *((int *) currentElem) = 'C' * 256 + 'P';
-    currentElem += sizeof(int);
-     *currentElem = ASM_VERSION;
-    currentElem += sizeof(int);
-    char *sizeOfData = currentElem;
-    currentElem += sizeof(int);
-
-    size_t previousCmd = 0;
+    char *outputData  = (char *) calloc(commandList -> numberOfLines, 2 * sizeof(int) + 3);
+    char *currentElem =                outputData + sizeof(Header)                        ;
+    size_t dataSize   =                        sizeof(Header)                             ;
+    size_t prevCmd    =                              0                                    ;
+    int      err      =                              0                                    ;
+    bool  printFlag   =                              1                                    ;
 
     for (size_t currentCommand = 0; currentCommand < commandList -> numberOfLines; ++currentCommand) {
-
+        // TODO: sscanf(%n) for labels
+        // char *buffer = (char *) calloc();
         if (*(commandList -> array[currentCommand].line) == ':') {
             commandList -> array[currentCommand].line++;
             int pointer = 0;
@@ -42,15 +69,14 @@ int stackAsmBin(Lines *commandList, Label **labels, size_t *labelsNum, FILE *out
                 return err;
 
             if (pointer == -1) {
-                err = labelCtor(&((*labels)[*labelsNum]), previousCmd, commandList -> array[currentCommand].line);
+                err = labelCtor(&((*labels)[*labelsNum]), prevCmd, commandList -> array[currentCommand].line);
                 (*labelsNum)++;
                 if (err)
                     return err;
             }
             currentCommand++;
         }
-
-        previousCmd = (currentElem - outputData) - 3 * sizeof(int);
+        prevCmd = dataSize - sizeof(Header);
 
 #define DEF_CMD(name, num, arg, ...)                                                                      \
     if (!strcmpi(commandList -> array[currentCommand].line, #name)) {                                     \
@@ -59,7 +85,7 @@ int stackAsmBin(Lines *commandList, Label **labels, size_t *labelsNum, FILE *out
                                                                                                           \
             size_t sizeOfCmd = 0;                                                                         \
                                                                                                           \
-            argDefenition(&(commandList -> array[currentCommand]), &currentElem, &sizeOfCmd, CMD_##name); \
+            argDefinition(&(commandList -> array[currentCommand]), currentElem, &sizeOfCmd, CMD_##name);  \
                                                                                                           \
             dataSize  += sizeOfCmd;                                                                       \
             currentElem += sizeOfCmd;                                                                     \
@@ -69,6 +95,9 @@ int stackAsmBin(Lines *commandList, Label **labels, size_t *labelsNum, FILE *out
             ++dataSize;                                                                                   \
         }                                                                                                 \
     } else                                                                                                \
+
+    // def_cmd
+    // def_jmp
 
 #define DEF_CMD_JUMP(name, num, oper)                                                                     \
         if (!strcmpi(commandList -> array[currentCommand].line, #name)) {                                 \
@@ -89,17 +118,9 @@ int stackAsmBin(Lines *commandList, Label **labels, size_t *labelsNum, FILE *out
               dataSize  += sizeof(int) + sizeof(char);                                                    \
         } else                                                                                            \
 
-#define DEF_CMD_REC(name, num, ...)                                                                       \
-        if (!strcmpi(commandList -> array[currentCommand].line, #name)) {                                 \
-            *currentElem = CMD_##name;                                                                    \
-            ++currentElem;                                                                                \
-            ++dataSize;                                                                                   \
-        }
-
 #include "cmd.h"
 
 #undef DEF_CMD_JUMP
-
 #undef DEF_CMD
 
         /* else */
@@ -107,8 +128,10 @@ int stackAsmBin(Lines *commandList, Label **labels, size_t *labelsNum, FILE *out
             return UndefinedCmd;
     }
 
+    Header binHeader  ={};
+    if (headerCtor(&binHeader, SIGNATURE, ASM_VERSION, dataSize)) return EXIT_FAILURE;
 
-    *((int *) sizeOfData) = (int) dataSize;
+    *((Header *) outputData) = binHeader;
 
     if (printFlag)
         fwrite(outputData, sizeof(char), dataSize, outStream);
@@ -117,14 +140,15 @@ int stackAsmBin(Lines *commandList, Label **labels, size_t *labelsNum, FILE *out
     return OK;
 }
 
-int argDefenition(Line *args, char **cmdArgs, size_t *sizeData, char command) {
+int argDefinition(Line *args, char *cmdArgs, size_t *dataSize, char command) {
     catchNullptr(args);
+    catchNullptr(cmdArgs);
 
     char         line[20] =      ""     ;
     unsigned char cmd     =    command  ;
     char         RegArg   =       0     ;
     int          NumArg   =       0     ;
-                *sizeData = sizeof(char);
+                *dataSize = sizeof(char);
 
     strcpy(line, args -> line);
 
@@ -134,50 +158,58 @@ int argDefenition(Line *args, char **cmdArgs, size_t *sizeData, char command) {
             cmd |= TypeRAM;
             currentPart++;
         }
-        if (!stricmp("rax", currentPart)) {
+        if (strlen(currentPart) == 3 && currentPart[0] == 'r' && currentPart[2] == 'x' &&
+                                        currentPart[1] >= 'a' && currentPart[1] <= 'd') {
             cmd |= TypeReg;
-            RegArg = 1;
-            *sizeData += sizeof(char);
-        } else if (!stricmp("rbx", currentPart)) {
-            cmd |= TypeReg;
-            RegArg = 2;
-            *sizeData += sizeof(char);
-        } else if (!stricmp("rcx", currentPart)) {
-            cmd |= TypeReg;
-            RegArg = 3;
-            *sizeData += sizeof(char);
-        } else if (!stricmp("rdx", currentPart)) {
-            cmd |= TypeReg;
-            RegArg = 4;
-            *sizeData += sizeof(char);
+            RegArg = (char) (currentPart[1] - 'a');
+            *dataSize += sizeof(char);
         } else {
             cmd |= TypeNum;
             NumArg = strtol(currentPart, &currentPart, 10);
-            *sizeData += sizeof(int);
+            *dataSize += sizeof(int);
         }
         currentPart = strtok(nullptr, "]+ ");
     }
 
-    catchNullptr(*cmdArgs);
-
-    char *curArg = *cmdArgs;
-    *curArg = cmd;
-    curArg++;
+    *cmdArgs = cmd;
+    cmdArgs++;
     if (cmd & TypeReg) {
-        *curArg = RegArg;
-        curArg++;
+        *cmdArgs = RegArg;
+        cmdArgs++;
     }
     if (cmd & TypeNum)
-        *((int *) curArg) = NumArg;
+        *((int *) cmdArgs) = NumArg;
 
     return OK;
 
 }
 
+int headerCtor(Header *header, size_t signature, size_t version, size_t dataSize) {
+    catchNullptr(header);
+
+    header -> signature = signature;
+    header ->  version  = version;
+    header -> dataSize  = dataSize;
+
+    return OK;
+}
+
+int headerDtor(Header *header) {
+    catchNullptr(header);
+
+    header -> signature = -1;
+    header ->  version  = -1;
+    header -> dataSize  = -1;
+
+    return OK;
+}
+
+/*
 int stackAsmTex(Lines *commandList, FILE *outStream) {
     catchNullptr(commandList);
     catchNullptr( outStream );
 
+    // Make full...! and verbose!
     fprintf(outStream, "%s %d %zu\n", SIGNATURE, ASM_VERSION, commandList -> numberOfLines);
     for (size_t currentCommand = 0; currentCommand < commandList -> numberOfLines; ++currentCommand) {
         if (!strcmpi(commandList -> array[currentCommand].line, "push")) {
@@ -207,3 +239,4 @@ int stackAsmTex(Lines *commandList, FILE *outStream) {
 
     return OK;
 }
+*/
