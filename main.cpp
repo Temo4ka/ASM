@@ -1,6 +1,6 @@
 //!     TEMO4KA's ASSEMBLER,
 //!   Made with Love and Pain,
-//!  If u want to use labels yo should use -> :[labelName] <- after commands
+//!  If u want to use labels yo should use -> [labelName]: <- before commands
 //!  COMMAND LIST: [Command_Name] [Types of Arguments]
 //!  [ Push ] [ [], r..x, number]
 //!  [ Pop  ] [ [], r..x]
@@ -18,12 +18,7 @@
 //!  [ Call ] [ label name]
 //!  [ Ret ]  [ - ]
 
-// FUCK:
-//
-// sscanf(buf, "%s:%n", string, &n);
-// %n -
-
-#define ASMBLER_CP
+#define ASSEMBLER_CP
 
 #include "asm.h"
 #include <iostream>
@@ -39,18 +34,18 @@ int main(int argc, char *argv[]) {
 
     switch (argc) {
         case 4:
-              fileIn    =           argv[1]        ;
-            fileTexOut  =           argv[2]        ;
-            fileBinOut  =           argv[3]        ;
+              fileIn    = argv[1];
+            fileBinOut  = argv[2];
+            fileTexOut  = argv[3];
             break;
 
         case 3:
-              fileIn    =           argv[1]        ;
-            fileTexOut  =           argv[2]        ;
+              fileIn    = argv[1];
+            fileBinOut  = argv[2];
             break;
 
         case 2:
-              fileIn    =           argv[1]        ;
+              fileIn    = argv[1];
             break;
 
         default:

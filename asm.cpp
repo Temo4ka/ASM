@@ -1,41 +1,10 @@
-#define ASMBLER_CP
+#define ASSEMBLER_CP
 #include <cstdio>
 #include <string.h>
 #include "asm.h"
 #ifndef functionList
     #include "functionList.h"
 #endif
-
-/* TODO:
- *  Makefile
- *
- *  target1: // produces executable
- *     g++
- *
- *  targets: asm cpu run
- *
- *  run:
- *      g++ run.cpp -o run
- *
- *  // run.cpp
- *
- *  int main(argc, argv)
- *  {
- *      system("./asm argv[1] binary");
- *      system("./cpu binary");
- *
- *      return 0;
- *  }
- *
- *  // make cpu
- *  // make asm
- *  // make run
- *
- *  target2
- *
- *  target3
- *
- */
 
 //const char  *SIGNATURE        =        "CP"      ;
 const int ASM_VERSION =         3       ;
@@ -58,25 +27,27 @@ int stackAsmBin(Lines *commandList, Label **labels, size_t *labelsNum, FILE *out
     bool  printFlag   =                              1                                    ;
 
     for (size_t currentCommand = 0; currentCommand < commandList -> numberOfLines; ++currentCommand) {
-        // TODO: sscanf(%n) for labels
-        // char *buffer = (char *) calloc();
-        if (*(commandList -> array[currentCommand].line) == ':') {
-            commandList -> array[currentCommand].line++;
+
+        while (commandList -> array[currentCommand].line[0] == '/' &&
+               commandList -> array[currentCommand].line[1] == '/' && currentCommand < commandList -> numberOfLines)
+            ++currentCommand;
+
+        if (commandList -> array[currentCommand].line[commandList -> array[currentCommand].length - 1]  == ':') {
+            commandList -> array[currentCommand].line[commandList -> array[currentCommand].length - 1]  = '\0';
+
             int pointer = 0;
 
             err = labelTryFind(labels, commandList->array[currentCommand].line, *labelsNum, &pointer);
-            if (err)
-                return err;
+            if (err) return err;
 
             if (pointer == -1) {
-                err = labelCtor(&((*labels)[*labelsNum]), prevCmd, commandList -> array[currentCommand].line);
+                err = labelCtor(&((*labels)[*labelsNum]), dataSize - sizeof(Header), commandList -> array[currentCommand].line);
                 (*labelsNum)++;
                 if (err)
                     return err;
             }
             currentCommand++;
         }
-        prevCmd = dataSize - sizeof(Header);
 
 #define DEF_CMD(name, num, arg, ...)                                                                      \
     if (!strcmpi(commandList -> array[currentCommand].line, #name)) {                                     \

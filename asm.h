@@ -2,7 +2,7 @@
 #include "functionList.h"
 #endif
 #include <cmath>
-#ifdef ASMBLER_CP
+#ifdef ASSEMBLER_CP
 #include "labels.h"
 #endif
 
@@ -46,7 +46,7 @@ struct Header {
 #undef DEF_CMD
 #undef DEF_CMD_JUMP
 
-#ifdef ASMBLER_CP
+#ifdef ASSEMBLER_CP
 int stackAsmTex(Lines *commandList, FILE *outStream);
 
 int stackAsmBin(Lines *commandList, Label **labels, size_t *labelsNum, FILE *outStream);

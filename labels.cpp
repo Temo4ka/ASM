@@ -1,4 +1,4 @@
-#define ASMBLER_CP
+#define ASSEMBLER_CP
 
 #include "asm.h"
 
@@ -15,7 +15,7 @@ int labelCtor(Label *label, const size_t cmd, const char *name) {
     return OK;
 }
 
-int labelDtor(Label *label) { // TODO: call dtor
+int labelDtor(Label *label) {
     catchNullptr(label);
     if (label -> status == Destructed)
         return LabelReDestruction;

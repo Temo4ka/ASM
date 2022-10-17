@@ -15,11 +15,13 @@ DEF_CMD(PUSH, 1, 1, {
 DEF_CMD(POP , 2, 1, {
 //TODO: OutOfArrayErr
 
-    if ((cmd) & TypeRAM)
-        cpu -> RAM[argument]  = stackPop(&(cpu -> stack), &err);
-    else if ((cmd) & TypeReg)
+    if ((cmd) & TypeRAM) {
+        if (argument >= RAM_SIZE) return CPU_OUT_OF_RAM;
+        cpu -> RAM[argument] = stackPop(&(cpu -> stack), &err);
+    } else if ((cmd) & TypeReg) {
+        if (argument >= REGS_SIZE) return CPU_OUT_OF_REGS;
         cpu -> Regs[argument] = stackPop(&(cpu -> stack), &err);
-    else
+    }else
         stackPop(&(cpu -> stack), &err);
 })
 
@@ -29,7 +31,7 @@ DEF_CMD(ADD , 3, 0, {
 
 DEF_CMD(OUT , 4, -1, {
     Elem_t value = stackPop(&(cpu -> stack), &err);
-    fprintf(stream, "%d.%02d\n", value / PRECISION, abs(value % PRECISION)); // TODO: mojno sdelat norm
+    fprintf(stream, "%d.%02d\n", value / PRECISION, abs(value % PRECISION));
     err |= stackPush(&(cpu -> stack), value);
 })
 
