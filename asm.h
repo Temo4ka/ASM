@@ -49,5 +49,7 @@ struct Header {
 #ifdef ASSEMBLER_CP
 int stackAsmTex(Lines *commandList, FILE *outStream);
 
-int stackAsmBin(Lines *commandList, Label **labels, size_t *labelsNum, FILE *outStream);
+int stackAsmBin(Lines *commandList, Label **labels, size_t *labelsNum, char** outputData);
+
+int myWrite(char *outputData, const char *fileName);
 #endif

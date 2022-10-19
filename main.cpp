@@ -57,8 +57,6 @@ int main(int argc, char *argv[]) {
     if (err) return EXIT_FAILURE;
 
 //    FILE *numbCommandTexFile = fopen(fileTexOut,  "w");
-    FILE *numbCommandBinFile = fopen(fileBinOut, "wb");
-    if (numbCommandBinFile == nullptr) return EXIT_FAILURE;
 //    catchNullptr(numbCommandTexFile);
 
     Lines commandList = {};
@@ -73,20 +71,29 @@ int main(int argc, char *argv[]) {
 //    err = stackAsmTex(&commandList, numbCommandTexFile);
 //    if (err) return err;
 
-    err = stackAsmBin(&commandList, &labels, &ReadyLabels, numbCommandBinFile);
+    char *outputData = nullptr;
+
+    err = stackAsmBin(&commandList, &labels, &ReadyLabels, &outputData);
     if (err) return EXIT_FAILURE;
 
-    err = stackAsmBin(&commandList, &labels, &ReadyLabels, numbCommandBinFile);
+    err = stackAsmBin(&commandList, &labels, &ReadyLabels, &outputData);
     if (err) return EXIT_FAILURE;
 
     for (size_t current = 0; current < ReadyLabels; ++current)
         if (labelDtor(&labels[current])) return EXIT_FAILURE;
     free(labels);
 
+    FILE *numbCommandBinFile = fopen(fileBinOut, "wb");
+    if (numbCommandBinFile == nullptr) return EXIT_FAILURE;
+
+    err = myWrite(outputData, fileBinOut);
+    if (err) return EXIT_FAILURE;
+
     err = textDestructor(&commandFile);
     if (err) return EXIT_FAILURE;
 
 //    fclose(numbCommandTexFile);
+    free(outputData);
     fclose(numbCommandBinFile);
 
     return 0;

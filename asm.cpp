@@ -14,17 +14,14 @@ int argDefinition(Line *args, char *cmdArgs, size_t *dataSize, char command);
 
 int headerCtor(Header *header, size_t signature, size_t version, size_t dataSize);
 
-int stackAsmBin(Lines *commandList, Label **labels, size_t *labelsNum, FILE *outStream) {
+int stackAsmBin(Lines *commandList, Label **labels, size_t *labelsNum, char** outputData) {
     catchNullptr(commandList);
-    catchNullptr( outStream );
     catchNullptr(   labels  );
 
-    char *outputData  = (char *) calloc(commandList -> numberOfLines, 2 * sizeof(int) + 3);
-    char *currentElem =                outputData + sizeof(Header)                        ;
+         *outputData  = (char *) calloc(commandList -> numberOfLines, 2 * sizeof(int) + 3);
+    char *currentElem =                *outputData + sizeof(Header)                       ;
     size_t dataSize   =                        sizeof(Header)                             ;
-    size_t prevCmd    =                              0                                    ;
     int      err      =                              0                                    ;
-    bool  printFlag   =                              1                                    ;
 
     for (size_t currentCommand = 0; currentCommand < commandList -> numberOfLines; ++currentCommand) {
 
@@ -32,21 +29,16 @@ int stackAsmBin(Lines *commandList, Label **labels, size_t *labelsNum, FILE *out
                commandList -> array[currentCommand].line[1] == '/' && currentCommand < commandList -> numberOfLines)
             ++currentCommand;
 
-        if (commandList -> array[currentCommand].line[commandList -> array[currentCommand].length - 1]  == ':') {
-            commandList -> array[currentCommand].line[commandList -> array[currentCommand].length - 1]  = '\0';
+        char  *curLine = commandList -> array[currentCommand].line  ;
+        size_t curLen  = commandList -> array[currentCommand].length;
 
-            int pointer = 0;
+        if (curLine[curLen - 1]  == ':') {
+            curLine[curLen - 1]  = '\0';
 
-            err = labelTryFind(labels, commandList->array[currentCommand].line, *labelsNum, &pointer);
+            err = addLabel(labels, curLine, curLen, labelsNum, dataSize);
             if (err) return err;
 
-            if (pointer == -1) {
-                err = labelCtor(&((*labels)[*labelsNum]), dataSize - sizeof(Header), commandList -> array[currentCommand].line);
-                (*labelsNum)++;
-                if (err)
-                    return err;
-            }
-            currentCommand++;
+            continue;
         }
 
 #define DEF_CMD(name, num, arg, ...)                                                                      \
@@ -82,10 +74,8 @@ int stackAsmBin(Lines *commandList, Label **labels, size_t *labelsNum, FILE *out
                 return err;                                                                               \
                                                                                                           \
             *((int *) currentElem) = pointer;                                                             \
-            if (pointer == -1)                                                                            \
-                printFlag = 0;                                                                            \
                                                                                                           \
-            currentElem += sizeof(int);                                                                   \
+            currentElem +=        sizeof(int)        ;                                                    \
               dataSize  += sizeof(int) + sizeof(char);                                                    \
         } else                                                                                            \
 
@@ -101,12 +91,7 @@ int stackAsmBin(Lines *commandList, Label **labels, size_t *labelsNum, FILE *out
 
     Header binHeader  ={};
     if (headerCtor(&binHeader, SIGNATURE, ASM_VERSION, dataSize)) return EXIT_FAILURE;
-
-    *((Header *) outputData) = binHeader;
-
-    if (printFlag)
-        fwrite(outputData, sizeof(char), dataSize, outStream);
-    free(outputData);
+    *((Header *) *outputData) = binHeader;
 
     return OK;
 }
@@ -171,6 +156,22 @@ int headerDtor(Header *header) {
     header -> signature = -1;
     header ->  version  = -1;
     header -> dataSize  = -1;
+
+    return OK;
+}
+
+int myWrite(char *outputData, const char *fileName) {
+    catchNullptr(outputData);
+    catchNullptr( fileName  );
+
+    FILE *stream = fopen(fileName, "wb");
+    catchNullptr(stream);
+
+    Header header = *((Header *) outputData);
+    if (fwrite(outputData, sizeof(char), header.dataSize, stream) != header.dataSize)
+        return EXIT_FAILURE;
+
+    fclose(stream);
 
     return OK;
 }

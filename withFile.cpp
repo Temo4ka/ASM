@@ -70,6 +70,7 @@ int getArrayOfStrings(Lines *arrayOfStrings, Text *poemText) {
             ++secondBufferPointer;
             ++stringIndex;
             firstBufferPointer = secondBufferPointer;
+            continue;
         }
         ++secondBufferPointer;
     }
