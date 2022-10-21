@@ -83,9 +83,6 @@ int main(int argc, char *argv[]) {
         if (labelDtor(&labels[current])) return EXIT_FAILURE;
     free(labels);
 
-    FILE *numbCommandBinFile = fopen(fileBinOut, "wb");
-    if (numbCommandBinFile == nullptr) return EXIT_FAILURE;
-
     err = myWrite(outputData, fileBinOut);
     if (err) return EXIT_FAILURE;
 
@@ -94,7 +91,6 @@ int main(int argc, char *argv[]) {
 
 //    fclose(numbCommandTexFile);
     free(outputData);
-    fclose(numbCommandBinFile);
 
     return 0;
 }

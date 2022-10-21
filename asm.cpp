@@ -24,6 +24,8 @@ int stackAsmBin(Lines *commandList, Label **labels, size_t *labelsNum, char** ou
     int      err      =                              0                                    ;
 
     for (size_t currentCommand = 0; currentCommand < commandList -> numberOfLines; ++currentCommand) {
+        if (commandList -> array[currentCommand].line[0] == '\0')
+            continue;
 
         while (commandList -> array[currentCommand].line[0] == '/' &&
                commandList -> array[currentCommand].line[1] == '/' && currentCommand < commandList -> numberOfLines)
@@ -62,7 +64,7 @@ int stackAsmBin(Lines *commandList, Label **labels, size_t *labelsNum, char** ou
     // def_cmd
     // def_jmp
 
-#define DEF_CMD_JUMP(name, num, oper)                                                                     \
+#define DEF_CMD_JUMP(name, num, oper, ...)                                                                \
         if (!strcmpi(commandList -> array[currentCommand].line, #name)) {                                 \
             *currentElem = CMD_##name;                                                                    \
             ++currentElem;                                                                                \
@@ -114,10 +116,9 @@ int argDefinition(Line *args, char *cmdArgs, size_t *dataSize, char command) {
             cmd |= TypeRAM;
             currentPart++;
         }
-        if (strlen(currentPart) == 3 && currentPart[0] == 'r' && currentPart[2] == 'x' &&
-                                        currentPart[1] >= 'a' && currentPart[1] <= 'd') {
+        if (strlen(currentPart) == 3 && currentPart[0] == 'r' && currentPart[2] == 'x') {
             cmd |= TypeReg;
-            RegArg = (char) (currentPart[1] - 'a');
+            RegArg = (char) (currentPart[1] - 'a' + 1);
             *dataSize += sizeof(char);
         } else {
             cmd |= TypeNum;
